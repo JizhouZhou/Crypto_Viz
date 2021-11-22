@@ -1,0 +1,43 @@
+library(readr)
+library(ggplot2)
+library(ggpubr)
+library(lubridate)
+library(scales)
+library(tm)
+
+market_cap <- read_csv("market_cap.csv")
+
+market_cap$Date = as.Date(market_cap$Date)
+
+market_cap <- market_cap[(1345:2255),]
+
+pt1 <- ggplot2::ggplot(market_cap, aes(x = Date, y = Cap)) +
+  geom_line(colour = 'dark grey') +
+  # geom_point(aes(Date, max), colour = 'green') +
+  # geom_point(aes(Date, min), colour = 'red') +
+  labs(x = NULL, y = NULL, title = 'Cryptocurrency Popularity') +
+  theme_pubclean() +
+  scale_x_date(date_breaks = "6 month", date_labels = '%b %Y') +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+pt1
+ggsave("pop.png", dpi = 600)
+
+pt2 <- ggplot2::ggplot(market_cap, aes(x = Date, y = Cap)) +
+  geom_line(colour = 'grey') +
+  geom_point(aes(Date, max), colour = 'green') +
+  geom_point(aes(Date, min), colour = 'red') +
+  labs(x = NULL, y = NULL, title = 'Cryptocurrency Popularity') +
+  theme_pubclean() +
+  scale_x_date(date_breaks = "6 month", date_labels = '%b %Y') +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+pt2
+ggsave("pop1.png", dpi = 600)
+
+
+
+
+
+

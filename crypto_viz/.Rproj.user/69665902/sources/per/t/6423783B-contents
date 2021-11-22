@@ -1,0 +1,187 @@
+library(readr)
+library(ggplot2)
+library(ggpubr)
+library(lubridate)
+library(scales)
+library(tm)
+
+TSUMOTO_A <- read_csv("data/TSUMOTO_A.CSV")
+TSUMOTO_B <- read_csv("data/TSUMOTO_B.CSV")
+TSUMOTO_C <- read_csv("data/TSUMOTO_C.CSV")
+
+Poz_Test <- subset(TSUMOTO_B, Thrombosis != 0)
+
+Poz_Test <- Poz_Test[!is.na(Poz_Test$ID),]
+
+Poz_Test <- merge(Poz_Test, TSUMOTO_A, by="ID")
+
+Poz_Test <- data.frame(Poz_Test$ID, Poz_Test$`Examination Date`, Poz_Test$Birthday)
+
+colnames(Poz_Test) <- c('ID', 'ExamDate', 'BDay')
+
+Poz_Test$ExamDate <- as.Date(Poz_Test$ExamDate)
+Poz_Test$BDay <- as.Date(Poz_Test$BDay)
+Poz_Test$Age <- as.numeric(Poz_Test$ExamDate - Poz_Test$BDay)
+
+hist(Poz_Test$Age)
+
+ggplot(data = Poz_Test, aes(x = Age/365)) +
+  geom_histogram(binwidth = 10, fill = "#0073C2FF", aes(y=..density..)) +
+  labs(title = 'Age Distribution of Patients with Thrombosis', x = 'Age', y = 'Relative Frequency') +
+  theme_pubclean()
+
+Poz_Test_1 <- subset(TSUMOTO_B, Thrombosis == 1)
+
+Poz_Test_1 <- Poz_Test_1[!is.na(Poz_Test_1$ID),]
+
+Poz_Test_1 <- merge(Poz_Test_1, TSUMOTO_A, by="ID")
+
+Poz_Test_1 <- data.frame(Poz_Test_1$ID, Poz_Test_1$`Examination Date`, Poz_Test_1$Birthday)
+
+colnames(Poz_Test_1) <- c('ID', 'ExamDate', 'BDay')
+
+Poz_Test_1$ExamDate <- as.Date(Poz_Test_1$ExamDate)
+Poz_Test_1$BDay <- as.Date(Poz_Test_1$BDay)
+Poz_Test_1$Age <- as.numeric(Poz_Test_1$ExamDate - Poz_Test_1$BDay)
+
+hist(Poz_Test_1$Age)
+
+ggplot(data = Poz_Test_1, aes(x = Age/365)) +
+  geom_histogram(binwidth = 10, fill = "#0073C2FF", aes(y=..density..)) +
+  labs(title = 'Age Distribution of Patients with Thrombosis', x = 'Age', y = 'Relative Frequency') +
+  theme_pubclean()
+
+Poz_Test_2 <- subset(TSUMOTO_B, Thrombosis == 2)
+
+Poz_Test_2 <- Poz_Test_2[!is.na(Poz_Test_2$ID),]
+
+Poz_Test_2 <- merge(Poz_Test_2, TSUMOTO_A, by="ID")
+
+Poz_Test_2 <- data.frame(Poz_Test_2$ID, Poz_Test_2$`Examination Date`, Poz_Test_2$Birthday)
+
+colnames(Poz_Test_2) <- c('ID', 'ExamDate', 'BDay')
+
+Poz_Test_2$ExamDate <- as.Date(Poz_Test_2$ExamDate)
+Poz_Test_2$BDay <- as.Date(Poz_Test_2$BDay)
+Poz_Test_2$Age <- as.numeric(Poz_Test_2$ExamDate - Poz_Test_2$BDay)
+
+hist(Poz_Test_2$Age)
+
+ggplot(data = Poz_Test_2, aes(x = Age/365)) +
+  geom_histogram(binwidth = 10, fill = "#0073C2FF", aes(y=..density..)) +
+  labs(title = 'Age Distribution of Patients with Severe Thrombosis', x = 'Age', y = 'Relative Frequency') +
+  theme_pubclean()
+
+
+Symp <- factor(TSUMOTO_B$Symptoms[!is.na(TSUMOTO_B$Symptoms)])
+Symp<- data.frame(summary(Symp))
+Symp <- subset(Symp, Symp$summary.Symp. > 1)
+
+Symp <- data.frame(rownames(Symp), Symp$summary.Symp.)
+colnames(Symp) <- c('symp', 'count')
+
+Symp <- with(Symp, aggregate(list(count = count), list(symp = tolower(symp)), sum))
+
+Symp <- subset(Symp, count > 2)
+
+ggplot(Symp, aes(x = symp, y = count)) +
+  geom_bar(fill = "#0073C2FF", stat = "identity") +
+  geom_text(aes(label = count), vjust = -0.3) + 
+  labs(title = "Summary of Patients' Symptoms", y = 'Frequency', x = 'Symptom') +
+  theme_pubclean()
+
+Diag <- factor(TSUMOTO_B$Diagnosis[!is.na(TSUMOTO_B$Diagnosis)])
+Diag <- data.frame(summary(Diag))
+Diag <- subset(Diag, Diag$summary.Diag. > 3)
+
+Diag <- data.frame(rownames(Diag), Diag$summary.Diag.)
+
+ggplot(Diag, aes(x = rownames.Diag., y = Diag.summary.Diag.)) +
+  geom_bar(fill = "#0073C2FF", stat = "identity") +
+  geom_text(aes(label = Diag.summary.Diag.), vjust = -0.3) + 
+  labs(title = "Summary of Patients' Diagnosis", y = 'Frequency', x = 'Diagnosis') +
+  theme_pubclean()
+
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+getmode(TSUMOTO_B$ID)
+
+max_pt <- subset(TSUMOTO_C, ID == getmode(TSUMOTO_C$ID))
+max_pt <- max_pt[!is.na(max_pt$Date),]
+max_pt$Date <- as.Date(as.character(max_pt$Date), format = "%y%m%d")
+
+plot(max_pt$Date, max_pt$GOT)
+plot(max_pt$Date, max_pt$GPT)
+plot(max_pt$Date, max_pt$TP)
+
+ggplot(data = max_pt, mapping = aes(x = Date, y = TP)) +
+  geom_point() +
+  geom_line(colour = 'red') +
+  geom_hline(yintercept = 6, linetype="dashed", color = "green") +
+  geom_hline(yintercept = 7.5, linetype="dashed", color = "green") +
+  geom_ribbon(aes(ymin = 6, ymax = 7.5), fill= "green", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 7.5, ymax = 8.5), fill= "red", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 4.5, ymax = 6), fill= "red", alpha = 0.1) + 
+  scale_x_date(date_labels = "%b %y") +
+  labs(title = "Patient Total Protein Level During Treatment", y = 'Total Protein', x = 'Date') +
+  theme_pubclean()
+
+ggplot(data = max_pt, mapping = aes(x = Date, y = TP)) +
+  geom_point() +
+  geom_line(colour = 'red') +
+  geom_hline(yintercept = 6, linetype="dashed", color = "green") +
+  geom_hline(yintercept = 7.5, linetype="dashed", color = "green") +
+  geom_ribbon(aes(ymin = 6, ymax = 7.5), fill= "green", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 7.5, ymax = 8.5), fill= "red", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 4.5, ymax = 6), fill= "red", alpha = 0.1) + 
+  scale_x_date(date_labels = "%b %y") +
+  labs(title = "Patient Total Protein Level During Treatment", y = 'Total Protein', x = 'Date') +
+  theme_pubclean()
+
+ggplot(data = max_pt, mapping = aes(x = Date, y = TP)) +
+  geom_point() +
+  geom_line(colour = 'red') +
+  geom_hline(yintercept = 6, linetype="dashed", color = "green") +
+  geom_hline(yintercept = 7.5, linetype="dashed", color = "green") +
+  geom_ribbon(aes(ymin = 6, ymax = 7.5), fill= "green", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 7.5, ymax = 8.5), fill= "red", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 4.5, ymax = 6), fill= "red", alpha = 0.1) + 
+  scale_x_date(date_labels = "%b %y") +
+  labs(title = "Patient Total Protein Level During Treatment", y = 'Total Protein', x = 'Date') +
+  theme_pubclean()
+
+ggplot(data = max_pt, mapping = aes(x = Date, y = PT)) +
+  geom_point() +
+  geom_line(colour = 'red') +
+  geom_hline(yintercept = 14, linetype="dashed", color = "green") +
+  geom_ribbon(aes(ymin = 14, ymax = 18), fill= "red", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 10, ymax = 14), fill= "green", alpha = 0.1) +
+  scale_x_date(date_labels = "%b %y") +
+  labs(title = "Patient Prothrombin Time During Treatment", y = 'Prothrombin Time', x = 'Date') +
+  theme_pubclean()
+
+ggplot(data = max_pt, mapping = aes(x = Date, y = PT)) +
+  geom_point() +
+  geom_line(colour = 'red') +
+  geom_hline(yintercept = 14, linetype="dashed", color = "green") +
+  geom_ribbon(aes(ymin = 14, ymax = 18), fill= "red", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 10, ymax = 14), fill= "green", alpha = 0.1) +
+  scale_x_date(date_labels = "%b %y") +
+  labs(title = "Patient Prothrombin Time During Treatment", y = 'Prothrombin Time', x = 'Date') +
+  theme_pubclean()
+
+ggplot(data = max_pt, mapping = aes(x = Date, y = TAT)) +
+  geom_point() +
+  geom_line(colour = 'red') +
+  geom_hline(yintercept = 3, linetype="dashed", color = "green") +
+  geom_ribbon(aes(ymin = 3, ymax = 170), fill= "red", alpha = 0.1) +
+  geom_ribbon(aes(ymin = 2, ymax = 3), fill= "green", alpha = 0.1) +
+  scale_x_date(date_labels = "%b %y") +
+  labs(title = "Patient's Thrombin-antithrombin III Complex During Treatment", y = 'Thrombin-antithrombin III Complex Level', x = 'Date') +
+  theme_pubclean()
+
+
+
